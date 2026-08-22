@@ -1,0 +1,20 @@
+{
+  "name": "ledgerlight",
+  "version": "0.1.0",
+  "description": "Local-first personal finance tracker: import bank CSVs, auto-categorize, understand your spending. All data stays on your machine.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "start": "node --no-warnings server/index.js",
+    "test": "node --no-warnings --test test/",
+    "gen:tokens": "node scripts/gen-tokens.mjs",
+    "gen:fixtures": "node scripts/gen-fixtures.mjs",
+    "seed": "node --no-warnings scripts/seed-demo.mjs"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
