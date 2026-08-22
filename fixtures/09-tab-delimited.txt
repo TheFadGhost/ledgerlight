@@ -1,0 +1,30 @@
+Date	Payee	Amount	Memo
+2026-01-05	Fake Gym	-29.99	Weekly membership
+2026-01-10	Demo Utilities	12.40	Billing correction refund
+2026-01-12	Demo Streaming	-16.49	Subscription plan
+2026-01-12	Fake Gym	-29.99	Weekly membership
+2026-01-19	Fake Gym	-29.99	Weekly membership
+2026-01-21	Hypothetical Hardware	-56.67	Service fee
+2026-01-25	Mock Bookseller	-22.60	Service fee
+2026-01-26	Fake Gym	-29.99	Weekly membership
+2026-01-29	Fake Coffee Co	-32.11	Weekly shop
+2026-01-30	Test Employer Payroll	2500.00	Salary deposit ACCT-0001112223
+2026-02-02	Fake Gym	-29.99	Weekly membership
+2026-02-04	TEST Mart	-27.00	Online order
+2026-02-07	Fake Coffee Co	-40.09	Online order
+2026-02-09	Fake Gym	-29.99	Weekly membership
+2026-02-12	Demo Streaming	-16.49	Subscription plan
+2026-02-16	Fake Gym	-29.99	Weekly membership
+2026-02-19	Fake Coffee Co	-69.54	Weekly shop
+2026-02-23	Fake Gym	-29.99	Weekly membership
+2026-02-27	Test Employer Payroll	2500.00	Salary deposit ACCT-0001112223
+2026-03-02	Fake Gym	-29.99	Weekly membership
+2026-03-09	Fake Gym	-29.99	Weekly membership
+2026-03-10	Hypothetical Hardware	-20.92	Weekly shop
+2026-03-13	Demo Streaming	-15.74	Subscription plan
+2026-03-13	Synthetic Sandwich Shop	-63.76	Card purchase
+2026-03-16	Fake Gym	-29.99	Weekly membership
+2026-03-19	Placeholder Produce	-57.81	Store pickup
+2026-03-23	Fake Gym	-29.99	Weekly membership
+2026-03-30	Fake Gym	-29.99	Weekly membership
+2026-03-31	Test Employer Payroll	2500.00	Salary deposit ACCT-0001112223

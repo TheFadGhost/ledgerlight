@@ -1,0 +1,29 @@
+Transaction Date,Merchant,Amount
+2026-01-04,Mock Bookseller,($69.45)
+2026-01-05,Fake Gym,($29.99)
+2026-01-12,Demo Streaming,($15.99)
+2026-01-12,Fake Gym,($29.99)
+2026-01-19,Fake Gym,($29.99)
+2026-01-20,Mock Bookseller,($74.74)
+2026-01-26,Fake Gym,($29.99)
+2026-01-30,Test Employer Payroll,"$2,500.00"
+2026-02-02,Fake Gym,($29.99)
+2026-02-03,Pretend Pharmacy,($6.50)
+2026-02-09,Fake Gym,($29.99)
+2026-02-12,Demo Streaming,($16.24)
+2026-02-16,Fake Gym,($29.99)
+2026-02-23,Fake Gym,($29.99)
+2026-02-24,TEST Mart,($15.37)
+2026-02-27,Test Employer Payroll,"$2,500.00"
+2026-03-02,Fake Gym,($29.99)
+2026-03-09,Fake Gym,($29.99)
+2026-03-13,Demo Streaming,($16.49)
+2026-03-16,Fake Gym,($29.99)
+2026-03-17,Demo Utilities,$12.40
+2026-03-18,Synthetic Sandwich Shop,($26.67)
+2026-03-21,Synthetic Sandwich Shop,($87.75)
+2026-03-22,Pretend Pharmacy,($31.01)
+2026-03-23,Fake Gym,($29.99)
+2026-03-24,Synthetic Sandwich Shop,($66.96)
+2026-03-30,Fake Gym,($29.99)
+2026-03-31,Test Employer Payroll,"$2,500.00"

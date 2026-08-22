@@ -162,3 +162,27 @@ export function schemaVersion(db) {
   const row = db.prepare(`SELECT value FROM meta WHERE key='schema_version'`).get();
   return row ? parseInt(row.value, 10) : 0;
 }
+
+/**
+ * node:sqlite (unlike better-sqlite3) has no .transaction() wrapper.
+ * Runs fn inside BEGIN/COMMIT, rolling back on throw. Nested calls are
+ * flattened: only the outermost call opens a transaction (savepoint-free,
+ * matching our flat call graphs).
+ */
+export function withTransaction(db, fn) {
+  if (db.__inLlTxn) {
+    return fn();
+  }
+  db.__inLlTxn = true;
+  try {
+    db.exec('BEGIN');
+    const result = fn();
+    db.exec('COMMIT');
+    return result;
+  } catch (e) {
+    try { db.exec('ROLLBACK'); } catch { /* no active txn */ }
+    throw e;
+  } finally {
+    db.__inLlTxn = false;
+  }
+}

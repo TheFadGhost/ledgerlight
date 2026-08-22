@@ -1,0 +1,32 @@
+Date,Payee,Debit,Credit,Memo
+01/02/2026,Sample Gas & Go,50.21,,Auto payment
+01/05/2026,Fake Gym,29.99,,Weekly membership
+01/12/2026,Demo Streaming,15.99,,Subscription plan
+01/12/2026,Fake Gym,29.99,,Weekly membership
+01/16/2026,Hypothetical Hardware,63.72,,Weekly shop
+01/19/2026,Fake Gym,29.99,,Weekly membership
+01/24/2026,Synthetic Sandwich Shop,23.27,,Auto payment
+01/26/2026,Fake Gym,29.99,,Weekly membership
+01/26/2026,TEST Mart,31.62,,Card purchase
+01/30/2026,Test Employer Payroll,,2500.00,Salary deposit ACCT-0001112223
+01/31/2026,Pretend Pharmacy,48.36,,Service fee
+02/02/2026,Fake Gym,29.99,,Weekly membership
+02/06/2026,Sample Gas & Go,24.74,,Auto payment
+02/09/2026,Fake Gym,29.99,,Weekly membership
+02/10/2026,TEST Mart,25.00,25.00,duplicate posting - both populated
+02/12/2026,Demo Streaming,15.74,,Subscription plan
+02/16/2026,Fake Gym,29.99,,Weekly membership
+02/21/2026,Fake Coffee Co,,,missing amount - neither populated
+02/23/2026,Fake Gym,29.99,,Weekly membership
+02/23/2026,Synthetic Sandwich Shop,42.46,,Card purchase
+02/27/2026,Test Employer Payroll,,2500.00,Salary deposit ACCT-0001112223
+03/02/2026,Fake Gym,29.99,,Weekly membership
+03/08/2026,Demo Utilities,,12.40,Billing correction refund
+03/09/2026,Fake Gym,29.99,,Weekly membership
+03/13/2026,Demo Streaming,15.99,,Subscription plan
+03/13/2026,Placeholder Produce,13.39,,Card purchase
+03/16/2026,Fake Gym,29.99,,Weekly membership
+03/23/2026,Fake Gym,29.99,,Weekly membership
+03/29/2026,Mock Bookseller,52.51,,Card purchase
+03/30/2026,Fake Gym,29.99,,Weekly membership
+03/31/2026,Test Employer Payroll,,2500.00,Salary deposit ACCT-0001112223

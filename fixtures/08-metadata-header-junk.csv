@@ -1,0 +1,32 @@
+Account: TEST-ACCT-99
+Statement Period: 2026-01-01 to 2026-03-31
+
+Posting Date,Details,Amount
+01/01/2026,Hypothetical Hardware (Auto payment),-40.65
+05/01/2026,Fake Gym (Weekly membership),-29.99
+06/01/2026,Placeholder Produce (Online order),-37.04
+08/01/2026,Hypothetical Hardware (Online order),-85.97
+12/01/2026,Demo Streaming (Subscription plan),-16.24
+12/01/2026,Fake Gym (Weekly membership),-29.99
+19/01/2026,Fake Gym (Weekly membership),-29.99
+26/01/2026,Fake Gym (Weekly membership),-29.99
+27/01/2026,Hypothetical Hardware (Service fee),-82.74
+30/01/2026,Test Employer Payroll (Salary deposit ACCT-0001112223),2500.00
+31/01/2026,Fake Coffee Co (Online order),-38.23
+02/02/2026,Fake Gym (Weekly membership),-29.99
+06/02/2026,Pretend Pharmacy (Card purchase),-72.73
+09/02/2026,Fake Gym (Weekly membership),-29.99
+12/02/2026,Demo Streaming (Subscription plan),-16.24
+16/02/2026,Fake Gym (Weekly membership),-29.99
+19/02/2026,Synthetic Sandwich Shop (Online order),-30.97
+20/02/2026,Mock Bookseller (Store pickup),-56.44
+23/02/2026,Fake Gym (Weekly membership),-29.99
+27/02/2026,Test Employer Payroll (Salary deposit ACCT-0001112223),2500.00
+02/03/2026,Fake Gym (Weekly membership),-29.99
+09/03/2026,Fake Gym (Weekly membership),-29.99
+13/03/2026,Demo Streaming (Subscription plan),-15.74
+15/03/2026,Demo Utilities (Billing correction refund),12.40
+16/03/2026,Fake Gym (Weekly membership),-29.99
+23/03/2026,Fake Gym (Weekly membership),-29.99
+30/03/2026,Fake Gym (Weekly membership),-29.99
+31/03/2026,Test Employer Payroll (Salary deposit ACCT-0001112223),2500.00

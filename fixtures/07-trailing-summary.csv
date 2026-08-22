@@ -1,0 +1,32 @@
+Date,Payee,Amount
+2026-01-05,Fake Gym,-29.99
+2026-01-05,Mock Bookseller,-46.69
+2026-01-05,Sample Gas & Go,-64.17
+2026-01-12,Demo Streaming,-16.49
+2026-01-12,Fake Gym,-29.99
+2026-01-13,Mock Bookseller,-10.49
+2026-01-15,Synthetic Sandwich Shop,-32.19
+2026-01-17,Sample Gas & Go,-74.43
+2026-01-19,Fake Gym,-29.99
+2026-01-21,Sample Gas & Go,-72.70
+2026-01-26,Fake Gym,-29.99
+2026-01-30,Test Employer Payroll,2500.00
+2026-02-02,Fake Gym,-29.99
+2026-02-09,Fake Gym,-29.99
+2026-02-12,Demo Streaming,-16.24
+2026-02-16,Fake Gym,-29.99
+2026-02-18,Placeholder Produce,-38.50
+2026-02-23,Fake Gym,-29.99
+2026-02-27,Test Employer Payroll,2500.00
+2026-02-27,Demo Utilities,12.40
+2026-03-02,Fake Gym,-29.99
+2026-03-09,Fake Gym,-29.99
+2026-03-13,Demo Streaming,-15.74
+2026-03-16,Fake Gym,-29.99
+2026-03-23,Fake Gym,-29.99
+2026-03-23,Fake Coffee Co,-80.23
+2026-03-30,Fake Gym,-29.99
+2026-03-31,Test Employer Payroll,2500.00
+
+Total,,12345.67
+Ending Balance,,12345.67

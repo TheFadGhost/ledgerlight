@@ -1,0 +1,33 @@
+Date,Payee,Amount,Memo
+01/03/2026,TEST Mart,-26.70,"latte, croissant, and tip"
+01/05/2026,Fake Gym,-29.99,Weekly membership
+01/05/2026,Pretend Pharmacy,-40.73,"produce, dairy, and snacks"
+01/06/2026,Hypothetical Hardware,-54.00,Card purchase
+01/12/2026,Demo Streaming,-15.99,Subscription plan
+01/12/2026,Fake Gym,-29.99,Weekly membership
+01/15/2026,TEST Mart,-3.58,Auto payment
+01/19/2026,Fake Gym,-29.99,Weekly membership
+01/26/2026,Fake Gym,-29.99,Weekly membership
+01/30/2026,Test Employer Payroll,2500.00,Salary deposit ACCT-0001112223
+02/02/2026,Fake Gym,-29.99,Weekly membership
+02/04/2026,Placeholder Produce,-78.38,Weekly shop
+02/09/2026,Fake Gym,-29.99,Weekly membership
+02/11/2026,Demo Utilities,12.40,Billing correction refund
+02/12/2026,Demo Streaming,-16.49,"Monthly plan
+(promo rate applied)"
+02/12/2026,Fake Coffee Co,-39.23,Card purchase
+02/14/2026,Fake Coffee Co,-4.75,"latte and pastry, extra shot"
+02/14/2026,Fake Coffee Co,-4.75,"latte and pastry, extra shot"
+02/16/2026,Fake Gym,-29.99,Weekly membership
+02/22/2026,Synthetic Sandwich Shop,-10.14,Online order
+02/23/2026,Fake Gym,-29.99,Weekly membership
+02/27/2026,Test Employer Payroll,2500.00,Salary deposit ACCT-0001112223
+02/27/2026,Fake Coffee Co,-7.00,Online order
+03/02/2026,Fake Gym,-29.99,Weekly membership
+03/09/2026,Fake Gym,-29.99,Weekly membership
+03/09/2026,Synthetic Sandwich Shop,-9.34,Auto payment
+03/13/2026,Demo Streaming,-15.74,Subscription plan
+03/16/2026,Fake Gym,-29.99,Weekly membership
+03/23/2026,Fake Gym,-29.99,Weekly membership
+03/30/2026,Fake Gym,-29.99,Weekly membership
+03/31/2026,Test Employer Payroll,2500.00,Salary deposit ACCT-0001112223
