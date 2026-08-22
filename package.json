@@ -9,7 +9,7 @@
   },
   "scripts": {
     "start": "node --no-warnings server/index.js",
-    "test": "node --no-warnings --test test/",
+    "test": "node --no-warnings --test \"test/*.test.mjs\"",
     "gen:tokens": "node scripts/gen-tokens.mjs",
     "gen:fixtures": "node scripts/gen-fixtures.mjs",
     "seed": "node --no-warnings scripts/seed-demo.mjs"
