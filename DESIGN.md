@@ -88,8 +88,13 @@ under deuteranopia simulation by automated test (`test/design-tokens.test.mjs`).
 | 2 | `#b5651d` | `#e0975a` | `#7a3e00` |
 | 3 | `#31597e` | `#7ab3de` | `#0f3d66` |
 | 4 | `#6b4fa1` | `#b39ae0` | `#46277d` |
-| 5 | `#a03a5c` | `#e07f9f` | `#75002c` |
-| 6 | `#5f6b23` | `#aeb85e` | `#3c4200` |
+| 5 | `#a03a5c` | `#e07f9f` | `#b8912a` |
+| 6 | `#5f6b23` | `#4f74c9` | `#7fa8d9` |
+
+The dark and high-contrast palettes were corrected after deuteranopia
+simulation testing (`test/design-tokens.test.mjs`) showed the original
+olive/crimson entries collapsed below ΔE 12 against their neighbours.
+Source of truth: `scripts/tokens.mjs`.
 
 Beyond six series, categories collapse into "Other" (bar charts list top N + Other;
 no pie ever exceeds six slices). Uncategorized is always drawn in `ink-faint` hatch or

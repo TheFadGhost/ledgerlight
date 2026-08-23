@@ -114,11 +114,10 @@ export function updateTransactionCategory(db, id, body) {
     if (!cat) throw err(400, 'INVALID_CATEGORY', 'No such category');
   }
 
-  pushUndo(db, 'bulk_categorize', [
-    { id: txn.id, categoryId: txn.category_id, source: txn.category_source, ruleId: txn.applied_rule_id },
-  ]);
-
   withTransaction(db, () => {
+    pushUndoInTxn(db, 'bulk_categorize', [
+      { id: txn.id, categoryId: txn.category_id, source: txn.category_source, ruleId: txn.applied_rule_id },
+    ]);
     applyCategory(db, txn.id, categoryId);
   });
 
