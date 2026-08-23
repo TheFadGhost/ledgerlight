@@ -9,6 +9,7 @@ const SORTABLE = new Map([
   ['payee', 't.payee COLLATE NOCASE'],
   ['amount', 't.amount_minor'],
   ['category', 'COALESCE(c.name, \'\') COLLATE NOCASE'],
+  ['account', 'a.name COLLATE NOCASE'],
 ]);
 
 export function queryTransactions(db, q = {}) {

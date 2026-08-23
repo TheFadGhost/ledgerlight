@@ -1,4 +1,5 @@
 import { daysBetween, daysInMonth } from '../core/dates.js';
+import { EFF_CTE } from './effective.js';
 
 // Cutoff anchor: MAX(transactions.date) in the database, not wall-clock today.
 // Chosen deliberately so detection is deterministic for a given dataset no
@@ -156,12 +157,13 @@ export function detectRecurring(db, { lookbackDays = 180 } = {}) {
   const rows = db
     .prepare(
       `
-      SELECT t.date AS date, t.payee AS payee, t.amount_minor AS amountMinor
-      FROM transactions t
-      LEFT JOIN categories c ON c.id = t.category_id
-      WHERE t.amount_minor < 0 AND COALESCE(c.exclude_from_spend, 0) = 0
-        AND t.date >= ?
-      ORDER BY t.date ASC, t.id ASC
+      ${EFF_CTE}
+      SELECT e.date AS date, e.payee AS payee, e.amountMinor AS amountMinor
+      FROM eff e
+      LEFT JOIN categories c ON c.id = e.categoryId
+      WHERE e.amountMinor < 0 AND COALESCE(c.exclude_from_spend, 0) = 0
+        AND e.date >= ?
+      ORDER BY e.date ASC, e.txnId ASC
       `,
     )
     .all(cutoff);

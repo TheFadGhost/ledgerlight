@@ -18,7 +18,7 @@ import {
   momChanges, uncategorizedSummary,
 } from '../src/analytics/aggregate.js';
 import { detectRecurring } from '../src/analytics/recurring.js';
-import { budgetStatus, setBudget, uncategorizedInMonth } from '../src/analytics/budgets.js';
+import { budgetStatus, setBudget, deleteBudget, uncategorizedInMonth } from '../src/analytics/budgets.js';
 import { getSettings, putSettings } from '../src/server/settings.js';
 import {
   createBackup, restoreBackup, exportTransactionsCsv, exportTransactionsJson,
@@ -32,7 +32,9 @@ export function buildApi(db, { dbPath }) {
     try {
       fn(req, res);
     } catch (err) {
-      res.status(err.status || 500).json({
+      const validationNames = ['ImportError', 'RuleValidationError', 'BackupError', 'MoneyFormatError', 'DateFormatError', 'TypeError', 'RangeError'];
+      const status = err.status ?? (validationNames.includes(err.name) ? 400 : 500);
+      res.status(status).json({
         error: err.code || err.name || 'INTERNAL',
         message: err.message,
         details: err.details ?? err.meta ?? undefined,
@@ -183,6 +185,10 @@ export function buildApi(db, { dbPath }) {
   api.put('/budgets', wrap((req, res) => {
     const { categoryId, monthlyAmountMinor } = req.body || {};
     res.status(201).json(setBudget(db, Number(categoryId), monthlyAmountMinor));
+  }));
+  api.delete('/budgets/:categoryId', wrap((req, res) => {
+    deleteBudget(db, Number(req.params.categoryId));
+    res.status(204).end();
   }));
 
   // ---- settings ---------------------------------------------------------

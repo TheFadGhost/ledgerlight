@@ -1,5 +1,6 @@
 import { addMonthsToKey } from '../core/dates.js';
 import { ratioBasisPoints } from '../core/money.js';
+import { EFF_CTE } from './effective.js';
 
 const MONTH_RE = /^\d{4}-(?:0[1-9]|1[0-2])$/;
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -23,24 +24,26 @@ function assertLimit(limit, label) {
 }
 
 // Buckets partition a month's activity; net = income + expense + transfers +
-// uncategorized reconciles every transaction into exactly one visible slot.
+// uncategorized reconciles every effective transaction into exactly one slot.
 // expenses NEGATIVE, income POSITIVE; exclude_from_spend categories land in
 // transfersMinor only; NULL-category expenses land in uncategorizedExpenseMinor.
+// Split-aware via the eff CTE (see effective.js).
 const BUCKETS_SQL = `
+  ${EFF_CTE}
   SELECT
-    COALESCE(SUM(CASE WHEN t.amount_minor > 0
+    COALESCE(SUM(CASE WHEN e.amountMinor > 0
                        AND COALESCE(c.exclude_from_spend, 0) = 0
-                      THEN t.amount_minor ELSE 0 END), 0) AS income,
-    COALESCE(SUM(CASE WHEN t.amount_minor < 0 AND c.id IS NOT NULL
+                      THEN e.amountMinor ELSE 0 END), 0) AS income,
+    COALESCE(SUM(CASE WHEN e.amountMinor < 0 AND c.id IS NOT NULL
                        AND c.exclude_from_spend = 0
-                      THEN t.amount_minor ELSE 0 END), 0) AS expense,
+                      THEN e.amountMinor ELSE 0 END), 0) AS expense,
     COALESCE(SUM(CASE WHEN c.exclude_from_spend = 1
-                      THEN t.amount_minor ELSE 0 END), 0) AS transfers,
-    COALESCE(SUM(CASE WHEN t.amount_minor < 0 AND c.id IS NULL
-                      THEN t.amount_minor ELSE 0 END), 0) AS uncategorized_expense
-  FROM transactions t
-  LEFT JOIN categories c ON c.id = t.category_id
-  WHERE substr(t.date, 1, 7) = ?
+                      THEN e.amountMinor ELSE 0 END), 0) AS transfers,
+    COALESCE(SUM(CASE WHEN e.amountMinor < 0 AND c.id IS NULL
+                      THEN e.amountMinor ELSE 0 END), 0) AS uncategorized_expense
+  FROM eff e
+  LEFT JOIN categories c ON c.id = e.categoryId
+  WHERE substr(e.date, 1, 7) = ?
 `;
 
 export function monthSummaries(db, fromMonth, toMonth) {
@@ -70,15 +73,16 @@ export function spendByCategory(db, month, { limit = 12 } = {}) {
   const rows = db
     .prepare(
       `
-      SELECT t.category_id AS categoryId, c.name AS name, p.name AS parentName,
-             SUM(t.amount_minor) AS total, COUNT(*) AS txnCount
-      FROM transactions t
-      LEFT JOIN categories c ON c.id = t.category_id
+      ${EFF_CTE}
+      SELECT e.categoryId AS categoryId, c.name AS name, p.name AS parentName,
+             SUM(e.amountMinor) AS total, COUNT(*) AS txnCount
+      FROM eff e
+      LEFT JOIN categories c ON c.id = e.categoryId
       LEFT JOIN categories p ON p.id = c.parent_id
-      WHERE t.amount_minor < 0 AND COALESCE(c.exclude_from_spend, 0) = 0
-        AND substr(t.date, 1, 7) = ?
-      GROUP BY t.category_id
-      ORDER BY ABS(SUM(t.amount_minor)) DESC, COALESCE(c.name, 'Uncategorized') ASC
+      WHERE e.amountMinor < 0 AND COALESCE(c.exclude_from_spend, 0) = 0
+        AND substr(e.date, 1, 7) = ?
+      GROUP BY e.categoryId
+      ORDER BY ABS(SUM(e.amountMinor)) DESC, COALESCE(c.name, 'Uncategorized') ASC
       LIMIT ?
       `,
     )
@@ -98,13 +102,14 @@ export function spendOverTime(db, fromDay, toDay) {
   return db
     .prepare(
       `
-      SELECT t.date AS day, SUM(t.amount_minor) AS totalMinor
-      FROM transactions t
-      LEFT JOIN categories c ON c.id = t.category_id
-      WHERE t.amount_minor < 0 AND COALESCE(c.exclude_from_spend, 0) = 0
-        AND t.date >= ? AND t.date <= ?
-      GROUP BY t.date
-      ORDER BY t.date ASC
+      ${EFF_CTE}
+      SELECT e.date AS day, SUM(e.amountMinor) AS totalMinor
+      FROM eff e
+      LEFT JOIN categories c ON c.id = e.categoryId
+      WHERE e.amountMinor < 0 AND COALESCE(c.exclude_from_spend, 0) = 0
+        AND e.date >= ? AND e.date <= ?
+      GROUP BY e.date
+      ORDER BY e.date ASC
       `,
     )
     .all(fromDay, toDay)
@@ -118,13 +123,14 @@ export function topMerchants(db, fromDay, toDay, { limit = 8 } = {}) {
   const rows = db
     .prepare(
       `
-      SELECT t.payee AS payee, COUNT(*) AS txnCount, SUM(t.amount_minor) AS total
-      FROM transactions t
-      LEFT JOIN categories c ON c.id = t.category_id
-      WHERE t.amount_minor < 0 AND COALESCE(c.exclude_from_spend, 0) = 0
-        AND t.date >= ? AND t.date <= ?
-      GROUP BY t.payee
-      ORDER BY ABS(SUM(t.amount_minor)) DESC, t.payee ASC
+      ${EFF_CTE}
+      SELECT e.payee AS payee, COUNT(*) AS txnCount, SUM(e.amountMinor) AS total
+      FROM eff e
+      LEFT JOIN categories c ON c.id = e.categoryId
+      WHERE e.amountMinor < 0 AND COALESCE(c.exclude_from_spend, 0) = 0
+        AND e.date >= ? AND e.date <= ?
+      GROUP BY e.payee
+      ORDER BY ABS(SUM(e.amountMinor)) DESC, e.payee ASC
       LIMIT ?
       `,
     )
@@ -145,13 +151,14 @@ export function momChanges(db, month) {
   const rows = db
     .prepare(
       `
+      ${EFF_CTE}
       SELECT c.id AS categoryId, c.name AS name,
-             COALESCE(SUM(CASE WHEN substr(t.date, 1, 7) = ? THEN t.amount_minor END), 0) AS currentMinor,
-             COALESCE(SUM(CASE WHEN substr(t.date, 1, 7) = ? THEN t.amount_minor END), 0) AS previousMinor
-      FROM transactions t
-      JOIN categories c ON c.id = t.category_id
-      WHERE t.amount_minor < 0 AND c.exclude_from_spend = 0
-        AND substr(t.date, 1, 7) IN (?, ?)
+             COALESCE(SUM(CASE WHEN substr(e.date, 1, 7) = ? THEN e.amountMinor END), 0) AS currentMinor,
+             COALESCE(SUM(CASE WHEN substr(e.date, 1, 7) = ? THEN e.amountMinor END), 0) AS previousMinor
+      FROM eff e
+      JOIN categories c ON c.id = e.categoryId
+      WHERE e.amountMinor < 0 AND c.exclude_from_spend = 0
+        AND substr(e.date, 1, 7) IN (?, ?)
       GROUP BY c.id
       `,
     )
@@ -191,7 +198,12 @@ export function momChanges(db, month) {
 export function uncategorizedSummary(db) {
   const row = db
     .prepare(
-      'SELECT COUNT(*) AS count, COALESCE(SUM(amount_minor), 0) AS totalMinor FROM transactions WHERE category_id IS NULL',
+      `
+      ${EFF_CTE}
+      SELECT COUNT(*) AS count, COALESCE(SUM(e.amountMinor), 0) AS totalMinor
+      FROM eff e
+      WHERE e.categoryId IS NULL
+      `,
     )
     .get();
   return { count: row.count, totalMinor: row.totalMinor };

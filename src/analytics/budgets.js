@@ -1,4 +1,5 @@
 import { ratioBasisPoints } from '../core/money.js';
+import { EFF_CTE } from './effective.js';
 
 const MONTH_RE = /^\d{4}-(?:0[1-9]|1[0-2])$/;
 
@@ -23,18 +24,28 @@ export function setBudget(db, categoryId, monthlyAmountMinor) {
   return row.id;
 }
 
+export function deleteBudget(db, categoryId) {
+  const r = db.prepare('DELETE FROM budgets WHERE category_id = ?').run(Number(categoryId));
+  if (r.changes === 0) {
+    const e = new Error('No budget for that category');
+    e.code = 'NOT_FOUND';
+    throw e;
+  }
+}
+
 export function budgetStatus(db, month) {
   assertMonth(month, 'month');
   const rows = db
     .prepare(
       `
+      ${EFF_CTE}
       SELECT b.id AS budgetId, b.category_id AS categoryId,
              c.name AS categoryName, p.name AS parentName,
              b.monthly_amount_minor AS monthlyAmountMinor,
              COALESCE((
-               SELECT SUM(t.amount_minor) FROM transactions t
-               WHERE t.category_id = b.category_id AND t.amount_minor < 0
-                 AND substr(t.date, 1, 7) = ?
+               SELECT SUM(e.amountMinor) FROM eff e
+               WHERE e.categoryId = b.category_id AND e.amountMinor < 0
+                 AND substr(e.date, 1, 7) = ?
              ), 0) AS spentMinor
       FROM budgets b
       JOIN categories c ON c.id = b.category_id
@@ -73,9 +84,10 @@ export function uncategorizedInMonth(db, month) {
   const row = db
     .prepare(
       `
-      SELECT COUNT(*) AS count, COALESCE(SUM(amount_minor), 0) AS totalMinor
-      FROM transactions
-      WHERE category_id IS NULL AND substr(date, 1, 7) = ?
+      ${EFF_CTE}
+      SELECT COUNT(*) AS count, COALESCE(SUM(e.amountMinor), 0) AS totalMinor
+      FROM eff e
+      WHERE e.categoryId IS NULL AND substr(e.date, 1, 7) = ?
       `,
     )
     .get(month);
