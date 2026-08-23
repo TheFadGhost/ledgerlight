@@ -7,7 +7,6 @@ import {
   previewImport,
   commitImport,
   ImportError,
-  importProgressChunks,
 } from '../src/import/importer.js';
 
 const require = createRequire(import.meta.url);
@@ -510,20 +509,6 @@ test('preview of an empty buffer returns a zeroed report without throwing', () =
   assert.deepEqual(p.headerLabels, []);
   assert.equal(p.columnMapGuess, null);
   assert.deepEqual(p.errors, []);
-});
-
-test('importProgressChunks computes chunk counts', () => {
-  assert.equal(importProgressChunks(0), 0);
-  assert.equal(importProgressChunks(1), 1);
-  assert.equal(importProgressChunks(500), 1);
-  assert.equal(importProgressChunks(501), 2);
-  assert.equal(importProgressChunks(1000), 2);
-  assert.equal(importProgressChunks(1250), 3);
-  assert.equal(importProgressChunks(101, 100), 2);
-  assert.equal(importProgressChunks(200, 100), 2);
-  assert.throws(() => importProgressChunks(-1), TypeError);
-  assert.throws(() => importProgressChunks(10, 0), TypeError);
-  assert.throws(() => importProgressChunks(10.5), TypeError);
 });
 
 test('auto-categorization records rule application when engine is available', (t) => {

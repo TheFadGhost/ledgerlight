@@ -29,6 +29,7 @@ export function deleteBudget(db, categoryId) {
   if (r.changes === 0) {
     const e = new Error('No budget for that category');
     e.code = 'NOT_FOUND';
+    e.status = 404;
     throw e;
   }
 }

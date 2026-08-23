@@ -126,7 +126,7 @@ dl.imp-stats dd {
 
 .dash-stats { display: flex; gap: 28px; flex-wrap: wrap; }
 .dash-stat-label { font-size: 12px; color: var(--ink-secondary); letter-spacing: 0.02em; }
-.dash-stat-value { font-size: 20px; font-weight: 600; text-align: left; }
+.dash-stat-value { font-size: 20px; font-weight: 600; text-align: right; }
 
 .dash-deltas { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 .dash-delta {

@@ -1,4 +1,5 @@
 import { api, el, fmtMoney, toast, announce, openDialog } from '../lib.js';
+import { parseAmountToMinorExact, minorToDecimalString } from '../money.js';
 
 const MONTHS_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -255,7 +256,7 @@ function stateChip(b) {
 function editDialog(b, state) {
   const amountInput = el('input', {
     type: 'text',
-    value: minorToMajorString(b.monthlyAmountMinor),
+    value: minorToDecimalString(b.monthlyAmountMinor),
     inputmode: 'decimal',
     autocomplete: 'off',
     id: 'bud-edit-amount',
@@ -271,7 +272,7 @@ function editDialog(b, state) {
   const saveBtn = el('button.btn.btn-primary', { type: 'button' }, 'Save changes');
   saveBtn.addEventListener('click', async () => {
     errLine.hidden = true;
-    const parsed = parseAmountToMinor(amountInput.value);
+    const parsed = parseAmountToMinorExact(amountInput.value);
     if (parsed == null) {
       showErr('Enter an amount like 250 or 250.00 \u2014 two decimal places at most.');
       amountInput.focus();
@@ -375,7 +376,7 @@ function setBudgetPanel(categories, budgets, state) {
       catSelect.focus();
       return;
     }
-    const parsed = parseAmountToMinor(amountInput.value);
+    const parsed = parseAmountToMinorExact(amountInput.value);
     if (parsed == null) {
       setErr('Enter an amount like 250 or 250.00 \u2014 two decimal places at most.');
       amountInput.focus();
@@ -420,26 +421,6 @@ function setBudgetPanel(categories, budgets, state) {
   }
 
   return card;
-}
-
-function parseAmountToMinor(raw) {
-  let s = String(raw ?? '').trim();
-  if (!s) return null;
-  if (s.startsWith('-')) return null;
-  s = s.replace(/^[^0-9]+/, '');
-  if (!/^\d+(\.\d{1,2})?$/.test(s)) return null;
-  const dot = s.indexOf('.');
-  const intPart = dot === -1 ? s : s.slice(0, dot);
-  const fracRaw = dot === -1 ? '' : s.slice(dot + 1);
-  if (fracRaw.length > 2) return null;
-  const frac = (fracRaw + '00').slice(0, 2);
-  const minor = Number(intPart) * 100 + Number(frac);
-  return Number.isSafeInteger(minor) ? minor : null;
-}
-
-function minorToMajorString(minor) {
-  const abs = Math.abs(minor);
-  return `${Math.floor(abs / 100)}.${String(abs % 100).padStart(2, '0')}`;
 }
 
 function monthLabel(key) {

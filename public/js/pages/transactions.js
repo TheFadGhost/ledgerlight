@@ -52,6 +52,7 @@ export async function render(view) {
     return;
   }
 
+  bindShortcutsOnce();
   await draw();
 }
 
@@ -217,12 +218,12 @@ async function draw() {
     root.append(tableView(res));
     root.append(pageBar(res));
   }
-  root.addEventListener('keydown', onPageKeydown);
 
   const v = document.getElementById('view');
   const activeEl = document.activeElement;
   const keepSearchFocus = activeEl?.id === 'tf-q' && activeEl.tagName === 'INPUT';
   const caret = keepSearchFocus ? activeEl.selectionStart : null;
+  const restoreFocus = keepSearchFocus ? null : focusRestorer(activeEl);
   v.innerHTML = '';
   v.append(root);
   if (keepSearchFocus) {
@@ -231,8 +232,52 @@ async function draw() {
       search.focus();
       try { search.setSelectionRange(caret, caret); } catch { /* type=search quirks */ }
     }
+  } else if (restoreFocus) {
+    const next = restoreFocus();
+    if (next) next.focus({ preventScroll: true });
   }
   return res;
+}
+
+// ---- redraw focus stability ---------------------------------------------------
+
+/**
+ * Capture enough information about a control that a re-draw is about to
+ * destroy to later re-focus its replacement. Returns () => Element|null.
+ * Covers filter controls (by id), sort header buttons (by column position),
+ * the select-all checkbox, pagination buttons (by label), and chip remove
+ * buttons (by aria-label).
+ */
+function focusRestorer(el) {
+  if (!(el instanceof Element)) return null;
+  if (!el.closest('.txn-page')) return null;
+
+  if (el.id) return () => document.getElementById(el.id);
+
+  if (el.classList.contains('sort-btn')) {
+    const th = el.closest('th');
+    if (!th || !th.parentElement) return null;
+    const col = [...th.parentElement.children].indexOf(th) + 1;
+    return () => document.querySelector(`.txn-table thead th:nth-child(${col}) button.sort-btn`);
+  }
+
+  if (el.classList.contains('txn-all-check')) {
+    return () => document.querySelector('.txn-all-check');
+  }
+
+  if (el.tagName === 'BUTTON' && el.closest('.txn-pagebar')) {
+    const label = el.textContent.trim();
+    return () => [...document.querySelectorAll('.txn-pagebar button')]
+      .find((b) => b.textContent.trim() === label && !b.disabled) ?? null;
+  }
+
+  if (el.classList.contains('txn-chip-x')) {
+    const label = el.getAttribute('aria-label');
+    if (!label) return null;
+    return () => document.querySelector(`.txn-chip-x[aria-label="${CSS.escape(label)}"]`);
+  }
+
+  return null;
 }
 
 // ---- page chrome -----------------------------------------------------------
@@ -452,6 +497,13 @@ function bulkBar() {
     categoryOptgroups());
   const remember = el('input', { id: 'tx-bulk-remember', type: 'checkbox' });
 
+  sel.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      applyBulk(sel, remember);
+    }
+  });
+
   const bar = el('div.txn-bulkbar', { hidden: true },
     el('span.txn-bulk-count', {}, ''),
     sel,
@@ -464,7 +516,7 @@ function bulkBar() {
   bar.refresh = () => {
     const n = state.selected.size;
     bar.hidden = n === 0;
-    bar.querySelector('.txn-bulk-count').textContent = `${n} selected`;
+    if (!bar.hidden) bar.querySelector('.txn-bulk-count').textContent = `${n} selected`;
   };
   bar.refresh();
   return bar;
@@ -721,10 +773,26 @@ function dialogOpen() {
   return Boolean(document.querySelector('.dialog-overlay'));
 }
 
+let shortcutsBound = false;
+
+/** Roving row shortcuts must live at document level: render() leaves focus
+ * on main#view (outside .txn-page), so a page-scoped listener never fires. */
+function bindShortcutsOnce() {
+  if (shortcutsBound) return;
+  shortcutsBound = true;
+  document.addEventListener('keydown', onPageKeydown);
+}
+
+function isTypingTarget(t) {
+  const tag = t?.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT'
+    || Boolean(t?.isContentEditable);
+}
+
 function onPageKeydown(e) {
   if (dialogOpen()) return;
-  const tag = e.target.tagName;
-  if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'BUTTON') return;
+  if (isTypingTarget(e.target)) return;
+  if (e.target?.tagName === 'BUTTON') return;
 
   const row = e.target.closest?.('tr[data-id]');
   const tbody = document.querySelector('.txn-table tbody');
@@ -971,6 +1039,11 @@ async function openPicker(id) {
   try {
     txn = await api(`/transactions/${id}`);
   } catch { /* fall back to list row */ }
+  if (!txn) {
+    toast('Could not load that transaction \u2014 it may have changed. Refresh and try again.', 'error');
+    announce('Could not load that transaction');
+    return;
+  }
 
   const sel = el('select', { id: 'tx-pick-cat' },
     el('option', { value: '' }, 'Uncategorized'),
@@ -980,6 +1053,36 @@ async function openPicker(id) {
   const remember = el('input', { id: 'tx-pick-remember', type: 'checkbox' });
 
   const errChip = el('div.txn-errchip', { role: 'alert', hidden: true });
+
+  let applying = false;
+  async function applyCategory() {
+    if (applying) return;
+    applying = true;
+    const body = { categoryId: sel.value === '' ? null : Number(sel.value) };
+    if (remember.checked && body.categoryId != null) body.remember = true;
+    try {
+      const updated = await api(`/transactions/${id}`, { method: 'PATCH', body });
+      if (body.categoryId != null) pushMru(body.categoryId);
+      patchRowInPlace(id, updated);
+      dlg.close();
+      const cat = state.categories.find((c) => c.id === body.categoryId);
+      announce(`${txn.payee} moved to ${cat ? cat.name : 'Uncategorized'}`);
+      toast(`Moved to ${cat ? cat.name : 'Uncategorized'}`, 'success');
+      await draw();
+      refocusRow(id);
+    } catch (err) {
+      errChip.textContent = err.message;
+      errChip.hidden = false;
+      applying = false;
+    }
+  }
+
+  sel.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      applyCategory();
+    }
+  });
 
   const dlg = openDialog({
     title: `Recategorize: ${txn.payee}`,
@@ -993,24 +1096,7 @@ async function openPicker(id) {
         el('div.dialog-actions', {},
           el('button.btn.btn-primary', {
             type: 'button',
-            onclick: async () => {
-              const body = { categoryId: sel.value === '' ? null : Number(sel.value) };
-              if (remember.checked && body.categoryId != null) body.remember = true;
-              try {
-                const updated = await api(`/transactions/${id}`, { method: 'PATCH', body });
-                if (body.categoryId != null) pushMru(body.categoryId);
-                patchRowInPlace(id, updated);
-                dlg.close();
-                const cat = state.categories.find((c) => c.id === body.categoryId);
-                announce(`${txn.payee} moved to ${cat ? cat.name : 'Uncategorized'}`);
-                toast(`Moved to ${cat ? cat.name : 'Uncategorized'}`, 'success');
-                await draw();
-                refocusRow(id);
-              } catch (err) {
-                errChip.textContent = err.message;
-                errChip.hidden = false;
-              }
-            },
+            onclick: applyCategory,
           }, 'Apply'))),
     ),
   });

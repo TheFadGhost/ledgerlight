@@ -129,7 +129,7 @@ export function openDb(path = process.env.LEDGERLIGHT_DB || DEFAULT_DB_PATH) {
     mkdirSync(dirname(path), { recursive: true });
   }
   const db = new DatabaseSync(path);
-  db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
+  db.exec('PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000; PRAGMA foreign_keys = ON;');
   migrate(db);
   return db;
 }

@@ -43,7 +43,7 @@
   --chart-3: #7ab3de;
   --chart-4: #b39ae0;
   --chart-5: #e07f9f;
-  --chart-6: #aeb85e;
+  --chart-6: #4f74c9;
 }
 
 [data-theme='high-contrast'] {
@@ -65,6 +65,6 @@
   --chart-2: #7a3e00;
   --chart-3: #0f3d66;
   --chart-4: #46277d;
-  --chart-5: #75002c;
-  --chart-6: #3c4200;
+  --chart-5: #b8912a;
+  --chart-6: #7fa8d9;
 }

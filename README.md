@@ -17,6 +17,16 @@ npm start
 
 Open http://localhost:7781 in your browser.
 
+## Screenshots
+
+Dashboard (light theme):
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+Transaction list with filters and bulk actions:
+
+![Transactions](docs/screenshots/transactions.png)
+
 ## Import your first CSV
 
 1. Open the **Import** page.

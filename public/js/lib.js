@@ -107,11 +107,11 @@ export function announce(text) {
 export function openDialog({ title, content, onClose }) {
   const root = document.getElementById('dialog-root');
   const prevFocus = document.activeElement;
-  const overlay = el('div.dialog-overlay', {},
+  const overlay = el('div.dialog-overlay', { tabindex: '-1' },
     el('div.dialog', { role: 'dialog', 'aria-modal': 'true', 'aria-label': title },
       el('div.dialog-head', {},
         el('h2', {}, title),
-        el('button.btn.btn-ghost', { type: 'button', 'aria-label': 'Close dialog', onclick: close }, '\u00D7')),
+        el('button.btn.btn-ghost.dialog-x', { type: 'button', 'aria-label': 'Close dialog', onclick: close }, '\u00D7')),
       content),
   );
   function trap(e) {
@@ -132,8 +132,14 @@ export function openDialog({ title, content, onClose }) {
   }
   document.addEventListener('keydown', trap, true);
   root.append(overlay);
-  const firstInput = overlay.querySelector('input, select, textarea, button:not(.toast-close)');
-  (firstInput ?? overlay).focus();
+  const dialog = overlay.querySelector('.dialog');
+  // Focus priority: first form field, else first actionable button (skipping
+  // toast dismiss and the dialog's own close button), else the overlay.
+  const focusable = (nodes) => nodes.find((n) => !n.disabled
+    && n.type !== 'hidden' && !n.closest('[hidden]')) ?? null;
+  const firstField = focusable([...dialog?.querySelectorAll('input, select, textarea') ?? []]);
+  const firstButton = focusable([...dialog?.querySelectorAll('button:not(.toast-close):not(.dialog-x)') ?? []]);
+  (firstField ?? firstButton ?? overlay).focus();
   return { close };
 }
 

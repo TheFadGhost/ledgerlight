@@ -2,6 +2,7 @@ import {
   api, el, fmtMoney, toast, announce, openDialog, confirmDialog,
   getSettings, applyTheme, loadSettings,
 } from '../lib.js';
+import { parseAmountToMinorExact, minorToDecimalString } from '../money.js';
 
 const THEMES = [
   ['light', 'Light'],
@@ -172,7 +173,7 @@ function displayCard(settings) {
     value: d.decimalSeparator ?? '.',
   });
   const digitsSelect = el('select', { id: 'set-digits' },
-    [0, 1, 2].map((n) =>
+    [0, 1, 2, 3, 4].map((n) =>
       el('option', { value: String(n), selected: (d.decimalDigits ?? 2) === n }, String(n))),
   );
 
@@ -358,7 +359,7 @@ function accountsCard(balances) {
       type: 'text', id: 'set-acct-name', value: a.name, maxlength: '80', autocomplete: 'off',
     });
     const openInput = el('input', {
-      type: 'text', id: 'set-acct-open', value: signedMajor(a.opening_balance_minor),
+      type: 'text', id: 'set-acct-open', value: minorToDecimalString(a.opening_balance_minor),
       inputmode: 'decimal', autocomplete: 'off',
     });
     const errLine = el('div.field-error', { id: 'set-acct-error', hidden: true });
@@ -738,34 +739,15 @@ function cap(word) {
   return word ? word.charAt(0).toUpperCase() + word.slice(1) : word;
 }
 
-function signedMajor(minor) {
-  const sign = minor < 0 ? '-' : '';
-  const abs = Math.abs(minor);
-  return `${sign}${Math.floor(abs / 100)}.${String(abs % 100).padStart(2, '0')}`;
-}
-
+/**
+ * Thin wrapper keeping the page's {signed, blankIsZero} call contract while
+ * the exact BigInt math lives in the shared money module.
+ */
 function parseAmountToMinor(raw, { signed = false, blankIsZero = false } = {}) {
-  let s = String(raw ?? '').trim();
+  const s = String(raw ?? '').trim();
   if (!s) return blankIsZero ? 0 : null;
-  let neg = false;
-  if (s.startsWith('(') && s.endsWith(')')) {
-    neg = true;
-    s = s.slice(1, -1).trim();
-  } else if (s.startsWith('-')) {
-    neg = true;
-    s = s.slice(1).trim();
-  } else if (s.startsWith('+')) {
-    s = s.slice(1).trim();
-  }
-  s = s.replace(/^[^0-9]+/, '');
-  if (!/^\d+(\.\d{1,2})?$/.test(s)) return null;
-  const dot = s.indexOf('.');
-  const intPart = dot === -1 ? s : s.slice(0, dot);
-  const fracRaw = dot === -1 ? '' : s.slice(dot + 1);
-  if (fracRaw.length > 2) return null;
-  const frac = (fracRaw + '00').slice(0, 2);
-  const minor = Number(intPart) * 100 + Number(frac);
-  if (!Number.isSafeInteger(minor)) return null;
-  if (!signed && neg) return null;
-  return neg ? -minor : minor;
+  const parsed = parseAmountToMinorExact(s);
+  if (parsed == null) return null;
+  if (!signed && parsed < 0) return null;
+  return parsed;
 }

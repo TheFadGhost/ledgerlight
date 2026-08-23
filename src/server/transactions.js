@@ -37,8 +37,8 @@ export function queryTransactions(db, q = {}) {
   const sortCol = SORTABLE.get(q.sort || 'date') || SORTABLE.get('date');
   const dir = q.dir === 'asc' ? 'ASC' : 'DESC';
 
-  const limit = Math.min(Math.max(Number(q.limit) || 50, 1), 500);
-  const offset = Math.max(Number(q.offset) || 0, 0);
+  const limit = Math.min(Math.max(Math.trunc(Number(q.limit)) || 50, 1), 500);
+  const offset = Math.max(Math.trunc(Number(q.offset)) || 0, 0);
 
   const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
   const base = `
@@ -118,7 +118,9 @@ export function updateTransactionCategory(db, id, body) {
     { id: txn.id, categoryId: txn.category_id, source: txn.category_source, ruleId: txn.applied_rule_id },
   ]);
 
-  applyCategory(db, txn.id, categoryId);
+  withTransaction(db, () => {
+    applyCategory(db, txn.id, categoryId);
+  });
 
   if (body?.remember && categoryId != null) {
     rememberMerchantCategory(db, txn.payee, categoryId);
@@ -155,17 +157,15 @@ export function bulkCategorize(db, body) {
     .all(...ids);
   if (previous.length === 0) return { updated: 0 };
 
-  pushUndo(db, 'bulk_categorize', previous);
-
-  const upd = db.prepare(
-    `UPDATE transactions SET category_id=?, applied_rule_id=NULL,
-        category_source = CASE WHEN ? IS NULL THEN NULL ELSE 'manual' END
-     WHERE id=?`,
-  );
   withTransaction(db, () => {
-    for (const id of ids) upd.run(categoryId, categoryId, id);
+    pushUndoInTxn(db, 'bulk_categorize', previous);
+    const upd = db.prepare(
+      `UPDATE transactions SET category_id=?, applied_rule_id=NULL,
+          category_source = CASE WHEN ? IS NULL THEN NULL ELSE 'manual' END
+       WHERE id=?`,
+    );
+    for (const p of previous) upd.run(categoryId, categoryId, p.id);
   });
-
 
   if (body?.remember && categoryId != null) {
     const payees = db
@@ -173,7 +173,7 @@ export function bulkCategorize(db, body) {
       .all(...ids);
     for (const p of payees) rememberMerchantCategory(db, p.payee, categoryId);
   }
-  return { updated: ids.length };
+  return { updated: previous.length };
 }
 
 export function splitTransaction(db, id, body) {
@@ -321,22 +321,26 @@ export function popUndo(db) {
   if (!row) return { undone: null };
   const payload = JSON.parse(row.payload);
 
+  const updTxn = db.prepare(
+    'UPDATE transactions SET category_id=?, category_source=?, applied_rule_id=? WHERE id=?',
+  );
+  const delSplit = db.prepare('DELETE FROM splits WHERE id=? AND transaction_id=?');
+  const insSplit = db.prepare(
+    'INSERT INTO splits (id, transaction_id, amount_minor, category_id, note) VALUES (?, ?, ?, ?, ?)',
+  );
+
   withTransaction(db, () => {
     if (row.action_type === 'bulk_categorize') {
       for (const p of payload) {
-        db.prepare(
-          'UPDATE transactions SET category_id=?, category_source=?, applied_rule_id=? WHERE id=?',
-        ).run(p.categoryId ?? null, p.source ?? null, p.ruleId ?? null, p.id);
+        updTxn.run(p.categoryId ?? null, p.source ?? null, p.ruleId ?? null, p.id);
       }
     } else if (row.action_type === 'split') {
       for (const sid of payload.splitIds) {
-        db.prepare('DELETE FROM splits WHERE id=? AND transaction_id=?').run(sid, payload.parentId);
+        delSplit.run(sid, payload.parentId);
       }
     } else if (row.action_type === 'unsplit') {
       for (const r of payload.rows) {
-        db.prepare(
-          'INSERT INTO splits (id, transaction_id, amount_minor, category_id, note) VALUES (?, ?, ?, ?, ?)',
-        ).run(r.id, r.transactionId, r.amountMinor, r.categoryId, r.note);
+        insSplit.run(r.id, r.transactionId, r.amountMinor, r.categoryId, r.note);
       }
     } else {
       throw err(500, 'UNKNOWN_UNDO', `Unknown undo action ${row.action_type}`);

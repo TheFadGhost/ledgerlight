@@ -6,6 +6,7 @@ import {
   toast,
   announce,
 } from '../lib.js';
+import { parseAmountToMinorExact } from '../money.js';
 import { navigate } from '../app.js';
 
 ensureStyles();
@@ -204,12 +205,9 @@ function parseRawAmount(raw, hint) {
     intPart = s.replace(/[.,'\u2019]/g, '');
   }
   if (!/^\d*$/.test(fracPart) || !/^\d+$/.test(intPart) || intPart.length > 13) return null;
-  let cents;
-  if (fracPart.length <= 2) cents = Number(fracPart.padEnd(2, '0'));
-  else cents = Number(fracPart.slice(0, 2)) + (Number(fracPart[2]) >= 5 ? 1 : 0);
-  const total = Number(intPart) * 100 + cents;
-  if (!Number.isSafeInteger(total)) return null;
-  return negative ? -total : total;
+  // Exact BigInt conversion via the shared money module. Client contract:
+  // more than 2 fractional digits are rejected (shown as unparsed), not rounded.
+  return parseAmountToMinorExact(`${negative ? '-' : ''}${intPart}.${fracPart}`);
 }
 
 function draftFromSample(row, m, hint, fmt) {

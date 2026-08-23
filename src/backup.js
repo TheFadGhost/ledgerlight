@@ -325,6 +325,7 @@ export function restoreBackup(db, backupObj) {
   }
 
   db.exec('BEGIN');
+  let committed = false;
   try {
     for (const table of DELETE_ORDER) {
       db.prepare(`DELETE FROM ${table}`).run();
@@ -333,6 +334,8 @@ export function restoreBackup(db, backupObj) {
     for (const table of INSERT_ORDER) {
       const spec = TABLE_SPECS[table];
       const jsonCols = JSON_COLUMNS.get(table) ?? new Set();
+      // Cache per column-shape since rows may omit optional columns.
+      const insertCache = new Map();
       for (const rawRow of rawData[table]) {
         const cols = spec.columns.filter((c) => rawRow[c] !== undefined);
         const values = cols.map((c) => {
@@ -341,9 +344,14 @@ export function restoreBackup(db, backupObj) {
             ? JSON.stringify(v)
             : v;
         });
-        db.prepare(
-          `INSERT INTO ${table} (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`,
-        ).run(...values);
+        let stmt = insertCache.get(cols.join(','));
+        if (!stmt) {
+          stmt = db.prepare(
+            `INSERT INTO ${table} (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`,
+          );
+          insertCache.set(cols.join(','), stmt);
+        }
+        stmt.run(...values);
       }
     }
 
@@ -365,11 +373,14 @@ export function restoreBackup(db, backupObj) {
     }
 
     db.exec('COMMIT');
-  } catch (err) {
-    db.exec('ROLLBACK');
+    committed = true;
+  } catch (txErr) {
+    if (!committed) {
+      try { db.exec('ROLLBACK'); } catch { /* no active txn */ }
+    }
     throw new BackupError('INVALID_ROW', {
       phase: 'transaction',
-      message: String(err && err.message ? err.message : err),
+      message: String(txErr && txErr.message ? txErr.message : txErr),
     });
   }
 

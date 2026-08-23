@@ -11,7 +11,7 @@ import { parseDateWithFormat, DATE_FORMATS } from '../core/dates.js';
 import { parseAmountToMinor } from '../core/money.js';
 import { planImport } from '../dedupe.js';
 import { saveProfile, updateProfile, getProfile } from './profiles.js';
-import { createRequire } from 'node:module';
+import { loadRules, categorizeTransaction } from '../rules/engine.js';
 
 const SAMPLE_LIMIT = 120;
 const SAMPLE_ROW_COUNT = 8;
@@ -27,37 +27,12 @@ export class ImportError extends Error {
   }
 }
 
-let rulesEngine;
-function loadRulesEngine() {
-  if (rulesEngine !== undefined) return rulesEngine;
-  try {
-    rulesEngine = createRequire(import.meta.url)('../rules/engine.js');
-  } catch {
-    rulesEngine = null;
-  }
-  return rulesEngine;
-}
-
 function autoCategorize(db, inserts) {
   if (inserts.length === 0) return [];
-  const uncategorized = () => inserts.map(() => null);
-  const engine = loadRulesEngine();
-  if (
-    !engine ||
-    typeof engine.compileRules !== 'function' ||
-    typeof engine.categorizeTransaction !== 'function'
-  ) {
-    return uncategorized();
-  }
-  let compiled;
-  try {
-    compiled = engine.compileRules(db);
-  } catch {
-    return uncategorized();
-  }
+  const compiled = loadRules(db);
   return inserts.map((txn) => {
     try {
-      const res = engine.categorizeTransaction(compiled, {
+      const res = categorizeTransaction(compiled, {
         date: txn.date,
         amountMinor: txn.amountMinor,
         payee: txn.payee,
@@ -708,12 +683,3 @@ export function commitImport(db, buffer, opts = {}) {
   }
 }
 
-export function importProgressChunks(totalRows, chunkSize = 500) {
-  if (!Number.isInteger(totalRows) || totalRows < 0) {
-    throw new TypeError(`totalRows must be a non-negative integer, got ${JSON.stringify(totalRows)}`);
-  }
-  if (!Number.isInteger(chunkSize) || chunkSize < 1) {
-    throw new TypeError(`chunkSize must be a positive integer, got ${JSON.stringify(chunkSize)}`);
-  }
-  return Math.ceil(totalRows / chunkSize);
-}

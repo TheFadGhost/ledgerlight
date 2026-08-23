@@ -72,15 +72,15 @@ at save; matching input truncated to 500 chars before test.
 
 ```
 GET/POST/PATCH/DELETE /api/accounts
-GET/POST/PATCH/DELETE /api/categories
+GET/POST/PATCH /api/categories
 GET /api/transactions (filters: q, account_id, category_id, from, to, min, max, uncategorized, sort, dir, limit, offset)
-PATCH /api/transactions/:id   (category override → learns)
-POST /api/transactions/bulk   {ids, action:'categorize'|'delete', category_id}
-POST /api/transactions/split  {id, parts:[{amount_minor, category_id?, note}]}
+PATCH /api/transactions/:id   (category override -> learns)
+POST /api/transactions/bulk   {ids, categoryId, remember?}
+POST /api/transactions/:id/split  {parts:[{amountMinor, categoryId?, note}]}   (sum must equal parent exactly)
 DELETE /api/transactions/:id/split
 POST /api/transactions/manual
-POST /api/import/preview      multipart file + optional profile_id → detection + parsed preview + ambiguities
-POST /api/import/commit       file + profile fields → atomic import, ledger report
+POST /api/import/preview      {content: csvText, profileId?, overrides?} -> detection + parsed preview + ambiguities
+POST /api/import/commit       {content, accountId|accountName, dateFormat?, profileId?} -> atomic import, ledger report
 GET/POST/PATCH/DELETE /api/profiles
 GET/POST/PATCH/DELETE /api/rules       POST /api/rules/test {draft} → matched txns
 GET /api/dashboard?month=YYYY-MM

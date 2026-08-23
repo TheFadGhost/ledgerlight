@@ -19,12 +19,17 @@ const pub = join(root, 'public');
 app.use(express.static(pub));
 app.get('*', (req, res) => res.sendFile(join(pub, 'index.html')));
 
-// Final error handler (API errors are handled inside the router).
+// Body-parser and router-level errors arrive here with err.type/type codes.
 app.use((errObj, req, res, next) => {
   void next;
-  console.error(errObj);
   if (res.headersSent) return;
-  res.status(500).json({ error: 'INTERNAL', message: errObj.message });
+  let status = errObj.status || 500;
+  let code = errObj.code || 'INTERNAL';
+  let message = errObj.message || 'Internal error';
+  if (errObj.type === 'entity.too.large') { status = 413; code = 'FILE_TOO_LARGE'; }
+  else if (errObj.type === 'entity.parse.failed') { status = 400; code = 'BAD_JSON'; message = 'Request body is not valid JSON'; }
+  if (status >= 500) console.error(errObj);
+  res.status(status).json({ error: code, message });
 });
 
 const PORT = Number(process.env.PORT) || 7781;

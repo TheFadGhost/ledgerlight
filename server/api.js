@@ -26,7 +26,9 @@ import {
 
 export function buildApi(db, { dbPath }) {
   const api = express.Router();
-  api.use(express.json({ limit: '1mb' }));
+  // Imports and full backups are large local files; 80 MB accommodates them
+  // while keeping the surface bounded.
+  api.use(express.json({ limit: '80mb' }));
 
   const wrap = (fn) => (req, res) => {
     try {
@@ -48,6 +50,14 @@ export function buildApi(db, { dbPath }) {
     e.code = code;
     e.details = details;
     return e;
+  };
+
+  /** Strict integer coercion for query params: NaN/garbage -> 400. */
+  const intParam = (raw, name) => {
+    if (raw === undefined || raw === null || raw === '') return undefined;
+    const n = Number(raw);
+    if (!Number.isInteger(n)) throw httpError(400, 'INVALID_PARAM', `${name} must be an integer, got ${JSON.stringify(raw)}`);
+    return n;
   };
 
   // ---- meta -------------------------------------------------------------
@@ -85,7 +95,17 @@ export function buildApi(db, { dbPath }) {
 
   // ---- transactions -----------------------------------------------------
   api.get('/transactions', wrap((req, res) => {
-    res.json(queryTransactions(db, req.query));
+    res.json(queryTransactions(db, {
+      ...req.query,
+      accountId: intParam(req.query.accountId, 'accountId'),
+      categoryId: req.query.categoryId === 'none' || req.query.categoryId === undefined
+        ? req.query.categoryId
+        : intParam(req.query.categoryId, 'categoryId'),
+      min: intParam(req.query.min, 'min'),
+      max: intParam(req.query.max, 'max'),
+      limit: intParam(req.query.limit, 'limit'),
+      offset: intParam(req.query.offset, 'offset'),
+    }));
   }));
   api.get('/transactions/:id', wrap((req, res) => {
     const t = getTransaction(db, Number(req.params.id));
@@ -132,22 +152,21 @@ export function buildApi(db, { dbPath }) {
   }));
 
   // CSV content arrives as JSON { content: <utf8 text> } (local-only tool).
-  api.post('/import/preview', wrap((req, res) => {
-    const { content, ...opts } = req.body || {};
+  const readContent = (req) => {
+    const { content } = req.body || {};
     if (typeof content !== 'string' || content.length === 0) {
       throw httpError(400, 'EMPTY_FILE', 'Request body must be JSON with a non-empty `content` string');
     }
     if (content.length > 64 * 1024 * 1024) {
       throw httpError(413, 'FILE_TOO_LARGE', 'CSV larger than 64 MB');
     }
-    res.json(previewImport(db, Buffer.from(content, 'utf8'), opts));
+    return Buffer.from(content, 'utf8');
+  };
+  api.post('/import/preview', wrap((req, res) => {
+    res.json(previewImport(db, readContent(req), req.body || {}));
   }));
   api.post('/import/commit', wrap((req, res) => {
-    const { content, ...opts } = req.body || {};
-    if (typeof content !== 'string' || content.length === 0) {
-      throw httpError(400, 'EMPTY_FILE', 'Request body must be JSON with a non-empty `content` string');
-    }
-    res.json(commitImport(db, Buffer.from(content, 'utf8'), opts));
+    res.json(commitImport(db, readContent(req), req.body || {}));
   }));
 
   // ---- dashboard & analytics -------------------------------------------
@@ -184,7 +203,12 @@ export function buildApi(db, { dbPath }) {
   }));
   api.put('/budgets', wrap((req, res) => {
     const { categoryId, monthlyAmountMinor } = req.body || {};
-    res.status(201).json(setBudget(db, Number(categoryId), monthlyAmountMinor));
+    const cid = intParam(categoryId, 'categoryId');
+    if (cid === undefined) throw httpError(400, 'INVALID_CATEGORY', 'categoryId is required');
+    if (!db.prepare('SELECT id FROM categories WHERE id=?').get(cid)) {
+      throw httpError(400, 'INVALID_CATEGORY', `No category ${cid}`);
+    }
+    res.status(200).json(setBudget(db, cid, monthlyAmountMinor));
   }));
   api.delete('/budgets/:categoryId', wrap((req, res) => {
     deleteBudget(db, Number(req.params.categoryId));
@@ -215,7 +239,14 @@ export function buildApi(db, { dbPath }) {
     res.json(createBackup(db));
   }));
   api.post('/restore', wrap((req, res) => {
-    res.json(restoreBackup(db, req.body));
+    const body = req.body;
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      throw httpError(400, 'INVALID_BACKUP', 'Body must be a Ledgerlight backup JSON object');
+    }
+    if (JSON.stringify(body).length > 80 * 1024 * 1024) {
+      throw httpError(413, 'FILE_TOO_LARGE', 'Backup larger than 80 MB');
+    }
+    res.json(restoreBackup(db, body));
   }));
 
   api.use((req, res) => res.status(404).json({ error: 'NOT_FOUND', message: `No route ${req.method} ${req.path}` }));

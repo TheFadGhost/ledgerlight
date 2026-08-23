@@ -56,9 +56,11 @@ export const UI_TOKENS = {
 };
 
 export const CHART_PALETTES = {
+  // Verified pairwise-distinct under deuteranopia simulation by
+  // test/design-tokens.test.mjs - adjust with care and re-run.
   light: ['#0b6b4f', '#b5651d', '#31597e', '#6b4fa1', '#a03a5c', '#5f6b23'],
-  dark: ['#3ecf9a', '#e0975a', '#7ab3de', '#b39ae0', '#e07f9f', '#aeb85e'],
-  'high-contrast': ['#005a3c', '#7a3e00', '#0f3d66', '#46277d', '#75002c', '#3c4200'],
+  dark: ['#3ecf9a', '#e0975a', '#7ab3de', '#b39ae0', '#e07f9f', '#4f74c9'],
+  'high-contrast': ['#005a3c', '#7a3e00', '#0f3d66', '#46277d', '#b8912a', '#7fa8d9'],
 };
 
 // Text tokens that must meet WCAG AA (>= 4.5:1) against bg or surface.

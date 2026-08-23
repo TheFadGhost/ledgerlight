@@ -282,4 +282,3 @@ export function testRule(db, draftRule, sampleLimit = 50) {
   return { matchedCount, samples };
 }
 
-export const compileRules = loadRules;

@@ -109,6 +109,11 @@ input, select, textarea {
   padding: 5px 8px;
 }
 input[type='checkbox'] { width: 15px; height: 15px; accent-color: var(--accent); }
+input[type='date']:focus-visible,
+input[type='date']:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 .field-error { color: var(--negative); font-size: 13px; margin-top: 4px; }
 .form-row { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; margin-bottom: 12px; }
 .form-row > div { min-width: 140px; }
@@ -129,7 +134,10 @@ th {
 td { padding: 5px 10px; vertical-align: baseline; }
 tbody tr:nth-child(even) { background: var(--surface-sunken); }
 tbody tr:hover { background: var(--selection); }
-tbody tr.selected { background: var(--selection); }
+tbody tr.selected {
+  background: var(--selection);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
 tbody tr:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 th.num, td.num { text-align: right; }
 .sort-btn {

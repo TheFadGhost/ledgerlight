@@ -81,13 +81,17 @@ document.addEventListener('click', (e) => {
 });
 
 async function undoLast() {
-  const res = await api('/undo', { method: 'POST' });
-  if (res.undone === null) {
-    toast('Nothing left to undo', 'info');
-  } else {
-    toast(`Undid: ${res.undone.replace('_', ' ')}`, 'success');
-    announce(`Undid ${res.undone}`);
-    render();
+  try {
+    const res = await api('/undo', { method: 'POST' });
+    if (res.undone === null) {
+      toast('Nothing left to undo', 'info');
+    } else {
+      toast(`Undid: ${res.undone.replace('_', ' ')}`, 'success');
+      announce(`Undid ${res.undone}`);
+      render();
+    }
+  } catch (err) {
+    toast(err.message || 'Undo failed', 'error');
   }
 }
 
@@ -101,5 +105,22 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-await loadSettings().catch(() => {});
-await render();
+// Boot asynchronously: module evaluation must finish synchronously because
+// pages/import.js statically imports { navigate } from this module — a
+// top-level await here would deadlock that circular import.
+async function boot() {
+  await loadSettings().catch(() => {});
+  await render();
+}
+
+function renderFatalError(err) {
+  view.innerHTML = '';
+  const panel = Object.assign(document.createElement('div'), { className: 'error-panel' });
+  panel.textContent = `Ledgerlight failed to start: ${err.message}`;
+  view.append(panel);
+}
+
+boot().catch((err) => {
+  console.error('Boot failed:', err);
+  renderFatalError(err);
+});
