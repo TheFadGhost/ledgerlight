@@ -682,11 +682,12 @@ async function taskFocusVisibility(browser) {
     });
     stops.push(d);
     if (d.missing) continue;
-    const shotName = `focus-step-${String(i).padStart(2, '0')}.png`;
+    // Focus-debug captures go to the OS temp dir, never into the repo.
+    const shotName = join(tmpdir(), `ll-focus-step-${String(i).padStart(2, '0')}.png`);
     try {
       const handle = await p.evaluateHandle(() => document.activeElement);
       const el = handle.asElement();
-      if (el) await el.screenshot({ path: join(SHOTS, shotName) });
+      if (el) await el.screenshot({ path: shotName });
     } catch { /* detached or zero-size */ }
   }
 
@@ -715,7 +716,7 @@ async function taskFocusVisibility(browser) {
   if (innerDateStops > 0) {
     info('Focus: date inputs consume multiple Tab stops', `${innerDateStops} stop(s) were internal day/month/year/picker segments of input[type=date] with no app-drawn indicator`);
   }
-  info('Focus: screenshots saved', 'docs/screenshots/focus-step-01..10.png (where element had a box)');
+  info('Focus: screenshots saved', join(tmpdir(), 'll-focus-step-01..10.png (where element had a box)'));
   await ctx.close();
 }
 
