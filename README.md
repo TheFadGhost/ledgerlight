@@ -1,5 +1,12 @@
 # Ledgerlight
 
+> **built with ox alpha**
+>
+> most of this was written in august 2026 during the free preview window of
+> [ox alpha](https://openrouter.ai/stealth/ox-alpha), an anonymous stealth model
+> that turned up on openrouter for about a week. i set the direction and reviewed
+> what came back. the tests are real and they pass — clone it and run them.
+
 A local personal finance tracker for people who want to understand their own spending by importing bank CSV exports — without uploading a single row to anyone's cloud.
 
 **All data stays on your machine**, in one SQLite file you control: `data/ledgerlight.db` inside the folder where you run Ledgerlight (override the location with the `LEDGERLIGHT_DB` environment variable). Nothing is transmitted anywhere; the app runs as a localhost web server and has no outbound network calls.
